@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Students</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background: linear-gradient(to right, #f5f6fa, #e8f0fe);
+      color: #2c3e50;
+    }
+    h1 {
+  color: white; /* text contrasts nicely with background */
+  margin-bottom: 25px;
+  text-align: center;
+  letter-spacing: 1px;
+  background: linear-gradient(to right, #3498ff, #1e90ff); /* added background */
+  padding: 20px; /* add some spacing */
+  border-radius: 12px; /* optional: soft rounded edges */
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2); /* subtle shadow */
+}
+
+    /* Container for the three main cards */
+    .card-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card {
+      border-radius: 12px;
+      padding: 25px;
+      background: #fff;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      flex: 1;
+      min-width: 280px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    h2 {
+      color: #34495e;
+      margin-bottom: 15px;
+      font-size: 1.3em;
+      border-bottom: 2px solid #3498ff;
+      padding-bottom: 5px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      margin: 5px 0 3px;
+      font-weight: bold;
+      color: #34495e;
+    }
+    input {
+      padding: 10px; 
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: #3498ff;
+      outline: none;
+    }
+
+    button {
+      padding: 10px 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      background-color: #3498ff;
+      color: white;
+      font-weight: bold;
+      transition: 0.3s;
+      margin-top: 8px;
+    }
+    button:hover {
+      background-color: #1e90ff;
+      transform: translateY(-2px);
+    }
+
+    .danger-btn { background-color: #e74c3c; }
+    .danger-btn:hover { background-color: #c0392b; }
+
+    .success-btn { background-color: #27ae60; }
+    .success-btn:hover { background-color: #1e8449; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: center;
+    }
+    th { background-color: #3498ff; color: white; }
+    tr:nth-child(even) { background-color: #f2f6ff; }
+    #message { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>STUDENTS</h1>
+
+  <!-- Cards Row -->
+  <div class="card-row">
+    <!-- Register Card -->
+    <div class="card">
+      <h2>Register Card</h2>
+      <form onsubmit="handleRegister(event)">
+        <label for="reg_uid">UID:</label>
+        <input type="text" id="reg_uid" required>
+        <label for="reg_name">Name:</label>
+        <input type="text" id="reg_name" required>
+        <label for="reg_phone">Phone:</label>
+        <input type="text" id="reg_phone" required>
+        <button type="submit" class="success-btn">Register</button>
+      </form>
+      <p id="registerMsg"></p>
+    </div>
+
+    <!-- Block/Unblock Card -->
+    <div class="card">
+      <h2>Block / Unblock Card</h2>
+      <form>
+        <label for="block_uid">UID:</label>
+        <input type="text" id="block_uid" required>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="danger-btn" onclick="handleBlock()">Block</button>
+          <button type="button" class="success-btn" onclick="handleUnblock()">Unblock</button>
+        </div>
+      </form>
+      <p id="blockMsg"></p>
+    </div>
+
+    <!-- Recharge Card -->
+    <div class="card">
+      <h2>Recharge</h2>
+      <form onsubmit="handleRecharge(event)">
+        <label for="rech_uid">UID:</label>
+        <input type="text" id="rech_uid" required>
+        <label for="rech_amount">Amount:</label>
+        <input type="number" id="rech_amount" required>
+        <button type="submit">Recharge</button>
+      </form>
+      <p id="rechargeMsg"></p>
+    </div>
+  </div>
+
+  <!-- Transactions Card -->
+  <div class="card" style="margin-top: 30px;">
+    <h2>Recent Transactions</h2>
+    <button onclick="fetchTransactions()">Refresh</button>
+    <table>
+      <thead>
+        <tr>
+          <th>UID</th>
+          <th>Amount</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody id="transactionsBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_BASE = "https://payment-system-779k.onrender.com";
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const payload = {
+        uid: document.getElementById("reg_uid").value,
+        name: document.getElementById("reg_name").value,
+        phone: document.getElementById("reg_phone").value
+      };
+      const res = await fetch(`${API_BASE}/register_student`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById("registerMsg").textContent = data.message || "Done.";
+    }
+
+    async function handleBlock() {
+      const payload = { uid: document.getElementById("block_uid").value };
+      const res = await fetch(`${API_BASE}/block_card`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById("blockMsg").textContent = data.message || "Done.";
+    }
+
+    async function handleUnblock() {
+      const payload = { uid: document.getElementById("block_uid").value };
+      const res = await fetch(`${API_BASE}/unblock_card`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById("blockMsg").textContent = data.message || "Done.";
+    }
+
+    async function handleRecharge(e) {
+      e.preventDefault();
+      const payload = {
+        uid: document.getElementById("rech_uid").value,
+        amount: document.getElementById("rech_amount").value
+      };
+      const res = await fetch(`${API_BASE}/recharge_card`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      document.getElementById("rechargeMsg").textContent = data.message || "Done.";
+    }
+
+    async function fetchTransactions() {
+      const res = await fetch(`${API_BASE}/transactions`);
+      const data = await res.json();
+      const tbody = document.getElementById("transactionsBody");
+      tbody.innerHTML = "";
+      if (data.status === "success" && data.transactions) {
+        data.transactions.forEach(tx => {
+          const row = `<tr>
+            <td>${tx.uid}</td>
+            <td>${tx.amount}</td>
+            <td>${tx.timestamp}</td>
+          </tr>`;
+          tbody.innerHTML += row;
+        });
+      }
+    }
+
+    // Load transactions on page load
+    fetchTransactions();
+  </script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg-1:#eef6ff;
+      --bg-2:#f7fbff;
+      --card:#ffffff;
+      --accent:#2563eb; /* blue */
+      --accent-2:#ef4444; /* red */
+      --muted:#6b7280;
+      --ok:#10b981; /* green */
+      --warn:#f59e0b; /* yellow/orange */
+      --danger:#ef4444;
+      --radius:12px;
+      --shadow: 0 8px 24px rgba(16,24,40,0.06);
+      --glass: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
+    }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: linear-gradient(180deg,var(--bg-1),var(--bg-2)); color:#0f172a;}
+    header{padding:28px 18px;background:transparent;text-align:center}
+    header h1{
+      margin: 0;
+      font-size: 2.5rem;
+      color: white;
+      letter-spacing: 0.2px;
+      background: linear-gradient(to right, #3498ff, #1e90ff); /* same blue gradient */
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);}
+    header p{margin:6px 0 0;color:var(--muted);font: size 2rem}
+    header p.muted {font-size:1.35rem;}
+
+    .wrap{max-width:1080px;margin:20px auto;padding:18px;}
+    .grid{display:grid;grid-template-columns:2fr 1fr;gap:20px} /* widened both sections */
+    @media (max-width:880px){ .grid{grid-template-columns:1fr} }
+
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;}
+    .card h2{margin:0 0 8px;font-size:1.05rem;color:#0b1220}
+    .card{transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover{transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15);}
+    .muted{color:var(--muted);font-size:0.95rem}
+
+
+    /* Anomalies layout */
+    .metrics{display:flex;gap:12px;flex-wrap:wrap}
+    .metric{
+      flex:1 1 160px; /* slightly larger default min width */
+      background:linear-gradient(180deg,#ffffff,#fbfdff);
+      border-radius:10px;padding:14px;border:1px solid rgba(37,99,235,0.06);
+      display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+    }
+    .metric .label{font-size:0.85rem;color:var(--muted)}
+    .metric .value{font-size:1.6rem;font-weight:700;color:#0b1220;margin-top:6px}
+
+    .severity-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .badge{padding:6px 10px;border-radius:999px;font-weight:600;font-size:0.85rem;color:white}
+    .badge.high{background:var(--danger)}
+    .badge.medium{background:var(--warn);color:#0f172a}
+    .badge.low{background:var(--ok)}
+
+    .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .btn{
+      background:linear-gradient(to right, #3498ff, #1e90ff);color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600;
+      box-shadow: 0 6px 18px rgba(52,152,255,0.3);
+    }
+    #refreshBtn:hover {
+  background: linear-gradient(to right, #1e90ff, #3498ff); /* subtle reverse effect on hover */
+  transform: translateY(-2px);  
+    }
+    .btn:disabled{opacity:0.6;cursor:not-allowed}
+    .btn.secondary{background:#111827;color:white;box-shadow:0 6px 18px rgba(17,24,39,0.06)}
+    .btn.warn{background:var(--accent-2);box-shadow:0 6px 18px rgba(239,68,68,0.12)}
+
+    .status{margin-top:10px;color:var(--muted);font-size:0.92rem}
+    .error{color:var(--danger);font-weight:600}
+
+    footer{max-width:920px;margin:14px auto 40px;padding:0 18px;color:var(--muted);font-size:0.9rem;text-align:center}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DASHBOARD</h1>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- LEFT: Anomalies Overview -->
+      <section class="card" aria-labelledby="anomaliesHeading">
+        <h2 id="anomaliesHeading">Anomalies Overview</h2>
+
+        <div class="metrics" role="list" aria-label="Anomaly statistics">
+          <div class="metric" role="listitem" title="Total anomalies recorded">
+            <div class="label">Total Anomalies</div>
+            <div id="total" class="value">—</div>
+            <div class="status muted" id="lastFetched">Last: —</div>
+          </div>
+
+          <div class="metric" role="listitem" title="Severity breakdown">
+            <div class="label">Severity distribution</div>
+            <div class="severity-row" style="margin-top:10px;">
+              <div class="badge high">High: <span id="high" style="margin-left:6px;font-weight:700">—</span></div>
+              <div class="badge medium">Med: <span id="medium" style="margin-left:6px">—</span></div>
+              <div class="badge low">Low: <span id="low" style="margin-left:6px">—</span></div>
+            </div>
+            <div class="status" style="margin-top:8px">Anomaly Rate: <strong id="rate">—</strong>%</div>
+          </div>
+        </div>
+
+        <div class="controls" style="margin-top:14px;">
+          <button id="refreshBtn" class="btn" onclick="fetchDashboard()">Refresh</button>
+        </div>
+
+        <div id="dashboardError" class="status" role="status" aria-live="polite"></div>
+      </section>
+
+      <!-- RIGHT: System Control -->
+      <aside class="card" aria-labelledby="systemHeading">
+        <h2 id="systemHeading">System Control</h2>
+        <p class="muted">Use with caution.</p>
+
+        <div style="margin-top:12px;">
+          <button id="resetBtn" class="btn warn" onclick="resetSystem()">Reset System</button>
+        </div>
+
+        <p id="resetResult" class="status" style="margin-top:12px"></p>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    © 2025 S&S Transport — Dashboard
+  </footer>
+
+  <script>
+    const API_BASE = "https://payment-system-779k.onrender.com";
+    const refreshBtn = document.getElementById('refreshBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const dashboardError = document.getElementById('dashboardError');
+    const lastFetched = document.getElementById('lastFetched');
+
+    // Safe update helper
+    function setText(id, value){
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.textContent = (value === undefined || value === null) ? '—' : String(value);
+    }
+
+    async function fetchDashboard(){
+      dashboardError.textContent = '';
+      setText('total','—'); setText('high','—'); setText('medium','—'); setText('low','—'); setText('rate','—');
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'Loading...';
+
+      try{
+        const res = await fetch(`${API_BASE}/anomalies_dashboard`);
+        if(!res.ok) throw new Error(`Server returned ${res.status}`);
+        const data = await res.json();
+        if(data && data.status === 'success'){
+          setText('total', data.total_anomalies ?? 0);
+          setText('high', data.severity_distribution?.High ?? 0);
+          setText('medium', data.severity_distribution?.Medium ?? 0);
+          setText('low', data.severity_distribution?.Low ?? 0);
+          setText('rate', data.anomaly_rate ?? 0);
+          lastFetched.textContent = 'Last: ' + new Date().toLocaleString();
+        } else {
+          dashboardError.textContent = 'Unexpected response from server';
+          dashboardError.classList.add('error');
+        }
+      } catch (err) {
+        console.error(err);
+        dashboardError.textContent = 'Error fetching dashboard: ' + (err.message || err);
+        dashboardError.classList.add('error');
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = 'Refresh';
+      }
+    }
+
+    async function resetSystem(){
+      if(!confirm('Are you sure you want to reset the system? This clears transactions and anomalies.')) return;
+      resetBtn.disabled = true;
+      resetBtn.textContent = 'Processing...';
+      document.getElementById('resetResult').textContent = '';
+      try{
+        const res = await fetch(`${API_BASE}/reset_system`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'}
+        });
+        const data = await res.json();
+        document.getElementById('resetResult').textContent = data.message || 'Reset completed';
+        // refresh the dashboard stats after reset
+        await fetchDashboard();
+      } catch (err) {
+        console.error(err);
+        document.getElementById('resetResult').textContent = 'Reset failed: ' + (err.message || err);
+      } finally {
+        resetBtn.disabled = false;
+        resetBtn.textContent = 'Reset System';
+      }
+    }
+
+    // initial load
+    fetchDashboard();
+  </script>
+</body>
+</html>
