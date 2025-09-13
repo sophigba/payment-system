@@ -193,11 +193,20 @@ def recharge_card():
     if getattr(student, "status", "active") != "active":
         return jsonify({"status": "error", "message": "Recharge not allowed. Student is not active."}), 403
 
-    tx = TransactionLog(uid=uid, amount=amount)
-    db.session.add(tx)
-    db.session.commit()
+    # ✅ Update balance instead of logging a transaction
+    try:
+        student.balance = (student.balance or 0) + float(amount)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": f"Recharge failed: {str(e)}"}), 500
 
-    return jsonify({"status": "success", "message": "Transaction logged", "transaction": transaction_to_dict(tx)})
+    return jsonify({
+        "status": "success",
+        "message": "Balance updated successfully",
+        "uid": student.uid,
+        "new_balance": float(student.balance)
+    })
 
 # ------------------------------------------------------
 # ANOMALIES DASHBOARD ENDPOINT
