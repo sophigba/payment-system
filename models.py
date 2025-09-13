@@ -10,6 +10,7 @@ class Student(db.Model):
     phone = db.Column(db.String(15))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), default="active", nullable=False)
+    balance = db.Column(db.Numeric, default=0)
 
     def is_blocked(self):
         return self.status == "blocked"
