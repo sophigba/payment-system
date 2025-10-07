@@ -203,7 +203,7 @@ def recharge_card():
 
     return jsonify({
         "status": "success",
-        "message": "Balance updated successfully",
+        "message": "Balance updated successfully",                                                                                                 
         "uid": student.uid,
         "new_balance": float(student.balance)
     })
@@ -327,6 +327,43 @@ def predict():
     pred = model.predict(features)[0]
     result = "Anomaly" if pred == -1 else "Normal"
     return jsonify({"status": "success", "prediction": result})
+
+@app.route("/log_transaction", methods=["POST"])
+def log_transaction():
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return jsonify({"status": "error", "message": "Invalid or missing JSON"}), 400
+
+    uid = data.get("uid")
+    amount = data.get("amount")
+    ts = datetime.utcnow()
+
+    if not uid or amount is None:
+        return jsonify({"status": "error", "message": "UID and amount are required"}), 400
+
+    student = Student.query.get(uid)
+    if not student:
+        return jsonify({"status": "error", "message": "Student not found"}), 404
+
+    # Check if student is active
+    if getattr(student, "status", "active") != "active":
+        return jsonify({"status": "error", "message": "Transaction denied. Card inactive."}), 403
+
+    try:
+        # Deduct amount from student balance
+        student.balance = (student.balance or 0) - float(amount)
+        tx = TransactionLog(uid=uid, amount=float(amount), timestamp=ts)
+        db.session.add(tx)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": f"Transaction failed: {str(e)}"}), 500
+
+    return jsonify({
+        "status": "success",
+        "message": "Transaction logged successfully",
+        "transaction": transaction_to_dict(tx)
+    }), 201
 
 if __name__ == "__main__":
     with app.app_context():
