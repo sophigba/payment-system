@@ -15,7 +15,7 @@ CORS(app)  # Allow future front-end integration
 # Load trained anomaly detection model if available
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "anomaly_detector.pkl")
 model = None
-model_features = ["cpu_usage", "memory_usage", "wifi_signal", "reader_response", "error_rate"]
+model_features = ["memory_usage", "wifi_signal", "reader_response", "error_rate"]
 
 try:
     if os.path.exists(MODEL_PATH):
@@ -51,7 +51,6 @@ def system_log_to_dict(log):
     return {
         "log_id": log.log_id,
         "timestamp": log.timestamp.isoformat() if log.timestamp else None,
-        "cpu_usage": log.cpu_usage,
         "memory_usage": log.memory_usage,
         "wifi_signal": log.wifi_signal,
         "reader_response": log.reader_response,
@@ -266,7 +265,6 @@ def system_logs():
         ts = datetime.utcnow()
 
     telemetry = {
-        "cpu_usage": to_float(data.get("cpu_usage")),
         "memory_usage": to_float(data.get("memory_usage")),
         "wifi_signal": to_float(data.get("wifi_signal")),
         "reader_response": to_float(data.get("reader_response")),
@@ -274,7 +272,6 @@ def system_logs():
     }
 
     log = SystemLog(
-        cpu_usage=telemetry["cpu_usage"],
         memory_usage=telemetry["memory_usage"],
         wifi_signal=telemetry["wifi_signal"],
         reader_response=telemetry["reader_response"],

@@ -29,7 +29,6 @@ class SystemLog(db.Model):
 
     log_id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
-    cpu_usage = db.Column(db.Float, nullable=False)       # CPU usage in %
     memory_usage = db.Column(db.Float, nullable=False)    # Memory usage in %
     wifi_signal = db.Column(db.Float, nullable=False)     # Wi-Fi signal strength in dBm
     reader_response = db.Column(db.Float, nullable=False) # NFC reader response time in ms
