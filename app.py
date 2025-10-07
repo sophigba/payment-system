@@ -43,7 +43,7 @@ def transaction_to_dict(tx):
     return {
         "tid": tx.tid,
         "uid": tx.uid,
-        "amount": float(tx.amount),
+        "amount": int(tx.amount),
         "timestamp": tx.timestamp.isoformat() if tx.timestamp else None
     }
 
@@ -195,7 +195,7 @@ def recharge_card():
 
     # ✅ Update balance instead of logging a transaction
     try:
-        student.balance = (student.balance or 0) + float(amount)
+        student.balance = int(student.balance or 0) + int(amount)
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -205,7 +205,7 @@ def recharge_card():
         "status": "success",
         "message": "Balance updated successfully",                                                                                                 
         "uid": student.uid,
-        "new_balance": float(student.balance)
+        "new_balance": int(student.balance)
     })
 
 # ------------------------------------------------------
@@ -351,8 +351,8 @@ def log_transaction():
 
     try:
         # Deduct amount from student balance
-        student.balance = (student.balance or 0) - float(amount)
-        tx = TransactionLog(uid=uid, amount=float(amount), timestamp=ts)
+        student.balance = int(student.balance or 0) - int(amount)
+        tx = TransactionLog(uid=uid, amount=int(amount), timestamp=ts)
         db.session.add(tx)
         db.session.commit()
     except Exception as e:

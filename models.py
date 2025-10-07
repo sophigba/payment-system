@@ -20,7 +20,7 @@ class TransactionLog(db.Model):
     __tablename__ = 'transaction_logs'
     tid = db.Column(db.Integer, primary_key=True, autoincrement=True)
     uid = db.Column(db.String(50), db.ForeignKey('students.uid'), nullable=False)
-    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    amount = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
